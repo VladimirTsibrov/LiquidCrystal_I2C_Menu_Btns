@@ -17,16 +17,16 @@ LiquidCrystal_I2C_Menu_Btns lcd(0x27, 20, 4);
 #define pinEnter 4
 #define pinBack  5 // Back - необязательная кнопка
 
-int index = 0;
-
 void setup() {
   lcd.begin();
   lcd.attachButtons(pinLeft, pinRight, pinEnter, pinBack);
 }
 
 void loop() {
-  String list[] = {"Europa+", "Record", "DFM", "Retro FM", "Energy"};
-  index = lcd.selectVal("Select station", list, 5, true, index);
-  lcd.printf("%s selected", list[index].c_str());
+  int index;
+  String list[] = {"Off", "On"};
+  index = lcd.selectVal("Turn backlight", list, 2, false);
+  lcd.setBacklight(index);
+  lcd.printf("Backlight turned %s", list[index].c_str());
   while (lcd.getButtonsState() == eNone);
 }

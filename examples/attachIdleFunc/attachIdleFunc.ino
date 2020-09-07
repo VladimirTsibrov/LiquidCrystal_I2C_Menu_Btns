@@ -30,17 +30,19 @@ void setup() {
   lcd.attachButtons(pinLeft, pinRight, pinEnter, pinBack);
   lcd.attachIdleFunc(myIdleFunc);
   pinMode(LED_BUILTIN, OUTPUT);
+  lcd.print("Press the button");
 }
 
 int x = 0;
 
 void loop() {
   myIdleFunc();
-  if (lcd.getButtonsState() == eButton) {
+  if (lcd.getButtonsState() != eNone) {
     // Для проверки вызовем любую функцию библиотеки,
     // которая ожидает действий от пользователя:
     x = lcd.inputVal("Input some val", 0, 100, x);
     lcd.printMultiline("Some text here");
     lcd.clear();
+    lcd.print("Press the button");
   }
 }

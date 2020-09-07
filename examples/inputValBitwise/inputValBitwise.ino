@@ -31,5 +31,5 @@ void loop() {
   }
   else
     lcd.print("Input canceled");
-  while (lcd.getButtonsState() != eButton);
+  while (lcd.getButtonsState() == eNone);
 }

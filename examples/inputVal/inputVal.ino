@@ -57,5 +57,5 @@ void loop() {
     lcd.printf("%d ", A[i]);
   
   // Ожидаем нажатия кнопки для продолжения
-  while (lcd.getButtonsState() != eButton);
+  while (lcd.getButtonsState() == eNone);
 }
