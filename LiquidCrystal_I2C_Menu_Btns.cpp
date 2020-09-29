@@ -396,7 +396,7 @@ void LiquidCrystal_I2C_Menu_Btns::attachButtons(int8_t pinLeft, int8_t pinRight,
 }
 
 eButtonsState LiquidCrystal_I2C_Menu_Btns::getButtonsState() {
-  // Функция опроса кнопок. Возвращает отличное от eNone значение при нажатии и
+  // Функция опроса кнопок. Возвращает отличное от eNone значение при нажатии
   // и при удержании кнопки
   eButtonsState Result;
   uint8_t newStates = 0;
@@ -425,6 +425,9 @@ eButtonsState LiquidCrystal_I2C_Menu_Btns::getButtonsState() {
       Result = eNone;
 
     _prevButtonStates = newStates;
+    #if defined(INACTIVITY_TIMEOUT)
+      if (Result != eNone) lastActivityTime = millis();
+    #endif
     return Result;
   }
     
@@ -466,11 +469,14 @@ void LiquidCrystal_I2C_Menu_Btns::printMultiline(const char str[]) {
   #else
     char buffer[_cols];
   #endif
+  #if defined(INACTIVITY_TIMEOUT)
+    lastActivityTime = millis();
+  #endif
   eButtonsState buttonsState = eNone;
   createChar(0, scrollUp);
   createChar(1, scrollDown);
   while ((buttonsState != eButton) and (buttonsState != eBack)) {
-    if (needRepaint) {
+     if (needRepaint) {
       needRepaint = 0;
       clear();
       // Вывод фрамента текстовой строки
@@ -495,6 +501,10 @@ void LiquidCrystal_I2C_Menu_Btns::printMultiline(const char str[]) {
     }
 
     buttonsState = getButtonsState();
+    #ifdef INACTIVITY_TIMEOUT
+      // Выход по таймауту
+      if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) return;
+    #endif
     if (buttonsState == eNone) {
       buttonsIdle(); // При бездействии выполняем buttonsIdle
     }
@@ -572,6 +582,9 @@ bool LiquidCrystal_I2C_Menu_Btns::_inputStrVal(const char title[], char buffer[]
   #endif
 
   printAt(0, hasTitle, tmpBuffer);
+  #if defined(INACTIVITY_TIMEOUT)
+    lastActivityTime = millis();
+  #endif
 
   createChar(0, iconOk);
   createChar(1, iconCancel);
@@ -608,6 +621,10 @@ bool LiquidCrystal_I2C_Menu_Btns::_inputStrVal(const char title[], char buffer[]
   // Основной цикл - выбор символа для редактирования или OK/Cancel
   while (1) {
     buttonsState = getButtonsState();
+    #ifdef INACTIVITY_TIMEOUT
+      // Выход по таймауту
+      if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) buttonsState = eBack;
+    #endif
     switch (buttonsState) {
       case eNone: {
           buttonsIdle();
@@ -692,6 +709,14 @@ bool LiquidCrystal_I2C_Menu_Btns::_inputStrVal(const char title[], char buffer[]
           while ((buttonsState != eButton) and (buttonsState != eBack))
           {
             buttonsState = getButtonsState();
+            #ifdef INACTIVITY_TIMEOUT
+              // Выход по таймауту
+              if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) {
+                noCursor();
+                clear();
+                return false;
+              }
+            #endif
             switch (buttonsState) {
               case eNone: {
                   buttonsIdle();
@@ -886,6 +911,10 @@ uint8_t LiquidCrystal_I2C_Menu_Btns::_selectVal(const char title[], T list[], ui
   createChar(2, scrollBoth);
   createChar(3, iconOk);
 
+  #if defined(INACTIVITY_TIMEOUT)
+    lastActivityTime = millis();
+  #endif
+
   eButtonsState buttonsState = eNone;
   while (1) {
     if (needRepaint) {
@@ -926,9 +955,12 @@ uint8_t LiquidCrystal_I2C_Menu_Btns::_selectVal(const char title[], T list[], ui
       }
     }
     buttonsState = getButtonsState();
+    #ifdef INACTIVITY_TIMEOUT
+      // Выход по таймауту
+      if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) buttonsState = eBack;
+    #endif
     switch (buttonsState) {
       case eNone: {
-
           buttonsIdle();
           continue;
         }
@@ -985,6 +1017,9 @@ uint8_t LiquidCrystal_I2C_Menu_Btns::showMenu(sMenuItem menu[], uint8_t menuLen,
   _menu = menu;
   _menuLen = menuLen;
   uint8_t selectedItem;
+  #if defined(INACTIVITY_TIMEOUT)
+    lastActivityTime = millis();
+  #endif
 
   createChar(0, scrollUp);
   createChar(1, scrollDown);
@@ -1066,6 +1101,10 @@ uint8_t LiquidCrystal_I2C_Menu_Btns::showSubMenu(uint8_t key) {
       free(buffer);
     }
     buttonsState = getButtonsState();
+    #ifdef INACTIVITY_TIMEOUT
+      // Выход по таймауту
+      if (millis() - lastActivityTime > INACTIVITY_TIMEOUT) buttonsState = eBack;
+    #endif
     switch (buttonsState) {
       case eBack: {
           free(subMenu);
