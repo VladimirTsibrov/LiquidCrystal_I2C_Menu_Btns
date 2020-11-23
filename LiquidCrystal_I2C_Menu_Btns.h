@@ -1,6 +1,7 @@
 #ifndef TSBR_LIQUID_CRYSTAL_I2C_MENU_BTNS_H
 #define TSBR_LIQUID_CRYSTAL_I2C_MENU_BTNS_H
 
+#include <Arduino.h>
 #include <inttypes.h>
 #include <Print.h>
 #include <stdarg.h>
@@ -52,7 +53,7 @@
 #define Rs B00000001  // Register select bit
 
 //#define CYRILLIC_DISPLAY // Раскомментировать для поддержки дисплеев с кириллицей
-#define SCROLL_LONG_CAPTIONS // Scroll long captions flag
+#define SCROLL_LONG_CAPTIONS // Раскомментировать для прокрутки длинных названий в меню и списках
 #define BUTTONS_POOL_DELAY 50
 #define BUTTONS_HOLD_BEFORE_REPEAT 1000
 #define NUMERIC_SIGNS "- "
@@ -73,8 +74,8 @@ struct sMenuItem {
 };
 
 #ifdef CYRILLIC_DISPLAY
-  uint8_t strlenUTF8(char *);
-  void substrUTF8(char*, char*, uint8_t, uint8_t);
+  uint8_t strlenUTF8(const char *);
+  void substrUTF8(const char*, char*, uint8_t, uint8_t);
 #endif
 
 /**
@@ -227,9 +228,9 @@ class LiquidCrystal_I2C_Menu_Btns : public Print {
        Ввод значений путем инкремента/декремента начального значения.
        inputValAt не очищает экран, позволяя использовать printf для вывод заголовка.
     */
-    template <typename T> T inputVal(const String &, T, T, T, T = 1); // title, min, max, default, step = 1
-    template <typename T> T inputVal(const char[], T, T, T, T = 1); // title, min, max, default, step = 1
-    template <typename T> T inputValAt(uint8_t, uint8_t, T, T, T, T = 1); // x, y, min, max, default, step = 1
+    template <typename T> T inputVal(const String &, T, T, T, T = 1, void (*)(T) = NULL); // title, min, max, default, step = 1, onChangeFunc
+    template <typename T> T inputVal(const char[], T, T, T, T = 1, void (*)(T) = NULL); // title, min, max, default, step = 1, onChangeFunc
+    template <typename T> T inputValAt(uint8_t, uint8_t, T, T, T, T = 1, void (*)(T) = NULL); // x, y, min, max, default, step = 1, onChangeFunc
 
     /**
        Ввод числовых и строковых значений путем редактирования отдельных разрядов.
@@ -302,26 +303,27 @@ class LiquidCrystal_I2C_Menu_Btns : public Print {
     void buttonsIdle();
 };
 
-template <typename T> T LiquidCrystal_I2C_Menu_Btns::inputVal(const String &title, T minValue, T maxValue, T defaultValue, T step) {
-  return inputVal(title.c_str(), minValue, maxValue, defaultValue, step);
+template <typename T> T LiquidCrystal_I2C_Menu_Btns::inputVal(const String &title, T minValue, T maxValue, T defaultValue, T step, void (*onChangeFunc)(T)) {
+  return inputVal(title.c_str(), minValue, maxValue, defaultValue, step, onChangeFunc);
 }
 
-template <typename T> T LiquidCrystal_I2C_Menu_Btns::inputVal(const char title[], T minValue, T maxValue, T defaultValue, T step) {
+template <typename T> T LiquidCrystal_I2C_Menu_Btns::inputVal(const char title[], T minValue, T maxValue, T defaultValue, T step, void (*onChangeFunc)(T)) {
   T v = defaultValue;
   if ((minValue > maxValue) or (v < minValue) or (v > maxValue))
     return v;
   uint8_t hasTitle = printTitle(title);
-  v = inputValAt(0, hasTitle, minValue, maxValue, defaultValue, step);
+  v = inputValAt(0, hasTitle, minValue, maxValue, defaultValue, step, onChangeFunc);
   clear();
   return v;
 }
 
-template <typename T> T LiquidCrystal_I2C_Menu_Btns::inputValAt(uint8_t x, uint8_t y, T minValue, T maxValue, T defaultValue, T step) {
+template <typename T> T LiquidCrystal_I2C_Menu_Btns::inputValAt(uint8_t x, uint8_t y, T minValue, T maxValue, T defaultValue, T step, void (*onChangeFunc)(T)) {
   T v = defaultValue;
   if ((minValue > maxValue) or (v < minValue) or (v > maxValue))
     return v;
   eButtonsState buttonsState = eNone;
   printAt(x, y, v);
+  if (onChangeFunc != NULL) (*onChangeFunc)(v);
   String S;
   #if defined(INACTIVITY_TIMEOUT)
     lastActivityTime = millis();
@@ -355,6 +357,7 @@ template <typename T> T LiquidCrystal_I2C_Menu_Btns::inputValAt(uint8_t x, uint8
       S.setCharAt(i, ' ');
     printAt(x, y, S.c_str());
     printAt(x, y, v);
+	if (onChangeFunc != NULL) (*onChangeFunc)(v);
   }
 }
 

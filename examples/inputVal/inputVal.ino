@@ -1,16 +1,18 @@
 /* Пример использования функций inputVal и inputValAt для ввода значений. Синтаксис:
- * inputVal(title, min, max, default, [step = 1]), где 
+ * inputVal(title, min, max, default, [step = 1], [*onChangeFunc = NULL]), где 
  * title - заголовок
  * min и max - минимальное и максимальное значения для задания диапазона ввода
  * default - начальное значение
  * step - шаг приращения, по умолчанию = 1
+ * *onChangeFunc - указатель на void функцию, которая будет вызываться при изменении значения
  * 
- * inputValAt(x, y, min, max, default, step = 1), где 
+ * inputValAt(x, y, min, max, default, step = 1, [*onChangeFunc = NULL]), где 
  * x и y - позиция на дисплее для ввода значения
  * остальные параметры аналогичны описанным ранее для функции inputVal
  * 
  * Функция inputVal очищает дисплей перед вводом. inputValAt не очищает дисплей
  */
+ 
 #include <Wire.h>
 #include <LiquidCrystal_I2C_Menu_Btns.h>
 LiquidCrystal_I2C_Menu_Btns lcd(0x27, 20, 4);
